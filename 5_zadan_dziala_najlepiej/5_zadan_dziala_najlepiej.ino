@@ -7,6 +7,8 @@
 // Initialize the LCD connected to pins 8, 9, 10, 11, 12, 13
 LiquidCrystal lcd(8, 9, 10, 11, 12, 13);
 
+long distance = 0;
+
 void setup()
 {
   Serial.begin(9600);
@@ -21,6 +23,7 @@ void setup()
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
 
+  xTaskCreate(MeasureDistanceTask, "MeasureDistance", 100, NULL, 1, NULL);
   xTaskCreate(MyTask1, "Task1", 100, NULL, 0, NULL);
   xTaskCreate(MyTask2, "Task2", 100, NULL, 0, NULL);
   xTaskCreate(MyTask3, "Task3", 100, NULL, 0, NULL);
@@ -42,16 +45,23 @@ long measureDistance() {
   return distance;
 }
 
-static void MyTask1(void* pvParameters)
+static void MeasureDistanceTask(void* pvParameters)
 {
   while(1)
   { 
-    long distance = measureDistance();
-    //lcd.print("                                   ");
+    distance = measureDistance();
     lcd.setCursor(0, 0);
     lcd.print("Distance: ");
     lcd.print(distance);
     lcd.print(" cm");
+    vTaskDelay(400/portTICK_PERIOD_MS);
+  }
+}
+
+static void MyTask1(void* pvParameters)
+{
+  while(1)
+  { 
     if (distance < 10) {
       digitalWrite(2,HIGH);
       digitalWrite(3,LOW); 
@@ -67,12 +77,6 @@ static void MyTask2(void* pvParameters)
 {  
   while(1)
   { 
-    long distance = measureDistance();
-    //lcd.print("                                   ");
-    lcd.setCursor(0, 0);
-    lcd.print("Distance: ");
-    lcd.print(distance);
-    lcd.print(" cm");
     if (distance >= 10 && distance < 20) {
       digitalWrite(2,LOW);
       digitalWrite(3,HIGH); 
@@ -88,12 +92,6 @@ static void MyTask3(void* pvParameters)
 { 
   while(1)
   { 
-    long distance = measureDistance();
-    //lcd.print("                                   ");
-    lcd.setCursor(0, 0);
-    lcd.print("Distance: ");
-    lcd.print(distance);
-    lcd.print(" cm");
     if (distance >= 20 && distance < 30) {
       digitalWrite(2,LOW);
       digitalWrite(3,LOW); 
@@ -109,12 +107,6 @@ static void MyIdleTask(void* pvParameters)
 {
   while(1)
   { 
-    long distance = measureDistance();
-    lcd.setCursor(0, 0);
-    //lcd.print("");
-    lcd.print("Distance: ");
-    lcd.print(distance);
-    lcd.print(" cm");
     if (distance >= 30) {
       digitalWrite(2,LOW);
       digitalWrite(3,LOW); 
